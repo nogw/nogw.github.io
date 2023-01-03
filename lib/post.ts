@@ -9,8 +9,7 @@ export interface IPost {
   tags: string[];
 }
 
-const rootPath = process.cwd();
-const postsPath = path.join(rootPath, 'posts/articles');
+const postsPath = path.join(process.cwd(), '/posts/articles');
 
 const getMdxPost = (filename: string) => getMdx<IPost>(filename, postsPath);
 const getAllMdxPosts = () => getAllMdx<IPost>(postsPath);

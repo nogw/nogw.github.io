@@ -7,8 +7,6 @@ export interface IMatter<A> {
   content: any;
 }
 
-const rootPath = process.cwd();
-
 const getMdx = <A>(filename: string, postsPath: string): IMatter<A> => {
   const filePath = path.join(postsPath, filename);
   const fileSlug = path.parse(filename).name;
@@ -30,7 +28,7 @@ const getAllMdx = <A>(postsPath: string): Array<IMatter<A>> => {
 };
 
 const getMeMdx = () => {
-  const filePath = path.join(rootPath, 'public/about.mdx');
+  const filePath = path.join(process.cwd(), 'public/about.mdx');
   const fileContent = fs.readFileSync(filePath, 'utf-8');
 
   const { data, content } = matter(fileContent);

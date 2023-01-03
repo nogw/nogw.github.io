@@ -16,7 +16,7 @@ const Posts: React.FC<PostsProps> = ({ posts }) => {
 };
 
 export const getStaticProps = async () => {
-  const mdxFiles = getAllMdxPosts().map(mdx => mdx.metadata);
+  const mdxFiles = getAllMdxPosts().map(mdx => mdx['metadata']);
 
   return {
     props: {

@@ -33,7 +33,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     paths: Array.from(tags).map(tag => {
       return {
         params: {
-          tag: slugify(tag!),
+          tag: slugify(tag || ''),
         },
       };
     }),
