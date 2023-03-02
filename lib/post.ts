@@ -11,7 +11,7 @@ export interface IPost {
 
 const postsPath = path.join(process.cwd(), '/posts/articles');
 
-const getMdxPost = (filename: string) => getMdx<IPost>(filename, postsPath);
-const getAllMdxPosts = () => getAllMdx<IPost>(postsPath);
+const getMdxPost = (filename: string) => getMdx(filename, postsPath);
+const getAllMdxPosts = () => getAllMdx(postsPath);
 
 export { getMdxPost, getAllMdxPosts };

@@ -1,10 +1,11 @@
-import type { GetStaticProps, NextPage } from 'next';
-import Link from 'next/link';
-import { Page } from '../components/Page';
-import { PostList } from '../components/PostList';
+import { GetStaticProps, NextPage } from 'next';
+
 import { getAllMdxPosts } from '../lib/post';
-import { IPost } from '../lib/post';
 import { description } from '../lib/settings';
+import { IPost } from '../lib/post';
+
+import { PostList } from '../components/PostList';
+import { Page } from '../components/Page';
 
 interface HomeProps {
   posts: Array<IPost>;
