@@ -1,0 +1,516 @@
+---
+title: 'System-F: A Gentle Introduction and Implementation'
+description: 'Let's understand a little bit about types'
+date: '2023-03-02'
+tags: ['functional-programming', 'type-theory']
+---
+
+System F is a Typed Lambda Calculus that incorporates a mechanism of universal quantification over types. Therefore, to better understand the concepts discussed in this post, it is assumed that you already have a basic understanding of the ([Simply Typed](https://en.wikipedia.org/wiki/Simply_typed_lambda_calculus)) [Lambda Calculus](https://en.wikipedia.org/wiki/Lambda_calculus) and the Lambda Calculus itself, along with concepts such as bound and free variables, alpha-equivalence, and capture-avoiding substitution.
+
+## Introduction
+
+In System F, the [universal quantifier](https://en.wikipedia.org/wiki/Universal_quantification) over types enables the creation of functions that can be applied to any data type, allowing for greater code reusability and flexibility. This is particularly useful in situations where a function needs to be applied to a variety of different data types.
+
+The key feature of System-F is the introduction of polymorphic types, there are several different types of polymorphism and different forms of polymorphism can be mixed in the same language. However, it should be noted that in System F, polymorphism specifically refers to parametric polymorphism.
+
+Parametric polymorphism refers to operations that can handle multiple types in the same way, enabling a single piece of code to be written in a "generic" manner using type variables instead of specific types. The code can then be instantiated with particular types as required.
+
+To understand the functioning of polymorphic types in System-F and the benefits of polymorphism, let's examine a basic example of the identity function in the Simply Typed Lambda Calculus:
+
+```haskell
+id_int    = λx:int. x
+id_bool   = λx:bool. x
+id_string = λx:string. x
+```
+
+Each of these functions can be applied to a different type of argument, but all share precisely the same behavior. If we wish to apply the id operation to different types of arguments within the same program, we would need to define separate versions of the function for each new type. The main limitation of the STLC type system is that it only allows for monomorphic types, which reduces the flexibility and reusability of code. System-F addresses this problem by introducing polymorphic types. Let us write a version of the code in System-F and explore its advantages, don't be scared, the grammar used will be explained better.
+
+```haskell
+id = ∀T. λT. λx: T. x
+
+id_int    = id [Int]
+id_bool   = id [Bool]
+id_string = id [String]
+```
+
+Let's take a look at how to implement a swap function that swaps the first and second elements of a pair, first in Simply Typed Lambda Calculus (STLC), and then in System F. This will give us a better understanding of the differences between the two systems and how System F enables code reusability.
+
+```
+swap_int    = λpair: (Int × Int). (snd pair, fst pair)
+swap_bool   = λpair: (Bool × Bool). (snd pair, fst pair)
+swap_string = λpair: (String × String). (snd pair, fst pair)
+...
+```
+
+Let's implement the swap function in System F to show the benefits of using polymorphic types.
+
+```
+swap = ∀A. ∀B. λpair: (A × B). (fst pair, snd pair)
+
+swap_int    = swap [Int] [Int]
+swap_bool   = swap [Bool] [Bool]
+swap_string = swap [String] [String]
+```
+
+We now have a swap function with the type ∀A. ∀B. (A × B) → (B × A). This function is universally quantified over all possible types A and B, enabling it to work with pairs of values of any type.
+
+## What System F introduces
+
+System F extends the syntax of STLC by adding the following constructs:
+
+### _Type variables_ `T`
+
+Are names that can represent a type that is not yet specified. It is a placeholder that can be replaced by any type. By convention, we use names that start with capital letters for types and type variables
+
+### _Type abstractions_ `λ T. e`
+
+In System F, polymorphism is achieved by using type variables and instatiating them only when necessary. Type variables are introduced by type abstracions. Type abstractions behave like regular abstractions, except that they operate on types. Type abstractions take the form:
+
+```python
+# This defines a type function that takes an argument X.
+λX. body
+```
+
+### _Type application_ `e [t]`
+
+Type application instantiates a type abstraction to a concrete type. It behaves like functional application, except that it operates on types. Type application takes the form:
+
+```python
+# Here the expression t is applied to the type T.
+t [T]
+```
+
+### _Univerversal quantification_ `(forall T. t)`
+
+type constructor that allows the creation of polymorphic types, Universal types take the form:
+
+```python
+# "∀" means "For All" and this can be read: for all types X, T.
+∀ X. T
+```
+
+## Grammar
+
+Before writing our implementation, the first thing we need to define is the grammar fot the language we'll be implemented, here's the [BNF](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form) grammar for the System-F extended with pairs and a new type constructor, T1 ×
+T2, called the product (or sometimes the cartesian product) of T1 and T2
+
+```cpp
+Type t ::= T
+        | forall T. t
+        | t1 -> t2
+        | T1 × T2
+
+Term e ::= x
+        | {e, e}
+        | fst e
+        | snd e
+        | λx:t => e
+        | e1 e2
+        | λT. e
+        | e [t]
+```
+
+## Understanding the grammar
+
+Let's go over each of the constructs in the grammar and what they mean:
+
+- `Type t ::= T: T` represents a type variable.
+- `forall T. t`: forall represents universal quantification, meaning the type t is valid for all possible types T.
+- `t1 -> t2`: -> represents a function type, where t1 is the input type and t2 is the output type.
+- `T1 × T2`: × represents the product type, where T1 and T2 are types that form a pair.
+
+Next, we have the grammar for terms in our language:
+
+- `x`: x represents a variable.
+- `{e, e}`: represents a pair constructor, where e and e are expressions that form a pair.
+- `fst e`: represents the first projection of a pair `e`.
+- `snd e`: represents the second projection of a pair `e`.
+- `λx:t => e`: λ represents a lambda abstraction, where x is a variable name and t is a type and e is the body of the function.
+- `e1 e2`: e1 and e2 represent expressions that are being applied, where e1 is the function and e2 is the argument.
+- `λT. e`: λT represents a type abstraction, where T is a type variable and e is the body of the function.
+- `e [t]`: e represents an expression and t represents a type, where e is being applied to a type argument t.
+  By following this grammar, we can create a parser to translate code written in our language into a form that a computer can understand and execute.
+
+## Implementation
+
+Now that we've covered some basic properties of System F and defined the BNF grammar for our language, it's time to dive into implementing the typer.
+
+To save on writing time, I chose not to show the parser, but don't feel discouraged. With the grammar defined, implementing the parser becomes easier. Additionally, the repository with the original code includes an implementation of the parser.
+
+I've chosen to implement System F in Rust, because Rust is a pretty good language, If you're not familiar with Rust, don't worry - I'll explain all the code as we go.
+
+We'll start with defining the types and terms of our language as Rust structs and enums starting by types.
+
+```rust
+#[derive(Debug, Clone, PartialEq)]
+pub enum Type {
+    TInt,
+    TBool,
+    TVar { value: String },
+    Arrow { left: Box<Type>, right: Box<Type> },
+    Forall { param: String, body: Box<Type> },
+    Product { fst: Box<Type>, snd: Box<Type> },
+}
+```
+
+As the types are simple, I chose to use only one enum to define them. There is nothing special here, just the types that are already defined in our grammar
+
+Now we have the structs for terms in our language:
+
+```rust
+#[derive(Debug, Clone, PartialEq)]
+pub struct Int {
+    pub value: usize,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Bool {
+    pub value: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct Var {
+    pub value: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct Abs {
+    pub param: String,
+    pub param_ty: Type,
+    pub body: Box<Expr>,
+}
+
+#[derive(Debug, Clone)]
+pub struct App {
+    pub lambda: Box<Expr>,
+    pub argm: Box<Expr>,
+}
+
+#[derive(Debug, Clone)]
+pub struct TAbs {
+    pub param: String,
+    pub body: Box<Expr>,
+}
+
+#[derive(Debug, Clone)]
+pub struct TApp {
+    pub lambda: Box<Expr>,
+    pub argm: Type,
+}
+
+#[derive(Debug, Clone)]
+pub struct Pair {
+    pub fst: Box<Expr>,
+    pub snd: Box<Expr>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Fst {
+    pub pair: Box<Expr>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Snd {
+    pub pair: Box<Expr>,
+}
+
+#[derive(Debug, Clone)]
+pub enum Expr {
+    Int(Int),
+    Bool(Bool),
+    Var(Var),
+    Abs(Abs),
+    App(App),
+    Fst(Fst),
+    Snd(Snd),
+    Pair(Pair),
+    TAbs(TAbs),
+    TApp(TApp),
+}
+```
+
+I prefer to use string variables instead of numerical indices (such as [De Bruijn indices](https://en.wikipedia.org/wiki/De_Bruijn_index)) in this implementation. Doing so can make the code more readable and easier to understand, particularly for non-technical individuals who may not be familiar with the specific numerical values being used. Moreover, using string variables can enhance the code's flexibility, as values can be modified without requiring changes to all instances of the numerical index.
+
+> **NOTE:** However, if we choose to use strings as variables, [alpha-renaming](https://opendsa-server.cs.vt.edu/OpenDSA/Books/PL/html/AlphaConversion.html) may be necessary. Alpha-renaming involves renaming variables with unique names, which can help prevent naming conflicts and make it easier to identify which variable is being referred to in each context. However, to keep the code simple I will skip this step
+
+Now that we have some Expressions implemented to use, lets start the implementation of our typer.
+
+To begin, we will define the context. The context is responsible for storing the types of variables. We will use a simple hashmap to define our context, which will consist of an identifier and its associated type.
+
+```rust
+pub struct Context {
+    pub types: HashMap<String, Type>,
+}
+
+impl Context {
+    pub fn new() -> Context {
+        Context { types: HashMap::new() }
+    }
+}
+```
+
+With our context in place, we can now begin implementing the function that infers the type of our expressions. The function takes an expression and a context as input. If the expression is correct, the function will return a type. Otherwise it will reject the expression and return an error
+
+```rust
+pub fn infer_type(context: &mut Context, expr: &Expr) -> Result<Type, TypeError> {}
+```
+
+Constant expressions, such as Bool and Int, we can simply return their types directly. For variables, we can perform a lookup in our context. If the variable is defined in our context, we can return its associated type. However, if the variable is not defined, we will return an error indicating that the variable has not been defined
+
+```rust
+pub fn infer_type(context: &mut Context, expr: &Expr) -> Result<Type, TypeError> {
+  match expr {
+    Expr::Int { .. } => Ok(Type::TInt),
+    Expr::Bool { .. } => Ok(Type::TBool),
+    Expr::Var(var) => {
+      match context.types.get(&var.value) {
+        Some(ty) => Ok(ty.clone()),
+        None => Err(TypeError::UndefinedVariable(var.value.clone())),
+      }
+    },
+  }
+}
+```
+
+Inferencing the types of Pair, First projection, and Second projection is also relatively straightforward. To infer the type of a Pair expression, we simply need to infer the types of the first and second expressions and return a product type with them. For Fst and Snd projections, we check whether the type of the pair they are projecting is a product type. If it is, we return the first and second element of the product, respectively, for each expression. If it is not a product type, we return an error indicating that the type is unexpected.
+
+```rust
+pub fn infer_type(context: &mut Context, expr: &Expr) -> Result<Type, TypeError> {
+  match expr {
+    ...
+    Expr::Pair(pair) => {
+        let fst = infer_type(context, &pair.fst)?;
+        let snd = infer_type(context, &pair.snd)?;
+
+        Ok(Type::Product {
+            fst: Box::new(fst),
+            snd: Box::new(snd),
+        })
+    }
+    Expr::Fst(fst) => {
+        let pair = infer_type(context, &fst.pair)?;
+
+        match pair {
+            Type::Product { fst, .. } => Ok(*fst),
+            pair => Err(TypeError::UnexpectedType(pair)),
+        }
+    }
+    Expr::Snd(snd) => {
+        let pair = infer_type(context, &snd.pair)?;
+
+        match pair {
+            Type::Product { snd, .. } => Ok(*snd),
+            pair => Err(TypeError::UnexpectedType(pair)),
+        }
+    }
+  }
+}
+```
+
+Since all abstraction parameters are typed, we can add the argument and its type to the context. By adding the variable to the context, we make it accessible inside the body of the expression. Then, we can infer the type of the body of the expression and return an arrow type for the expression. For example, if we have an expression λx: Int. x, the type of this expression is Int -> Int.
+
+```rust
+pub fn infer_type(context: &mut Context, expr: &Expr) -> Result<Type, TypeError> {
+    match expr {
+      Expr::Abs(abs) => {
+          context.types.insert(abs.param.clone(), abs.param_ty.clone());
+
+          let body_type = infer_type(context, &abs.body)?;
+
+          Ok(Type::Arrow {
+              left: Box::new(abs.param_ty.clone()),
+              right: Box::new(body_type),
+          })
+      }
+    }
+}
+```
+
+The case of the Infer application is an interesting one. Firstly, we need to define an "Equal" function that can check if two expressions are equal.
+
+```rust
+// sometimes rustfmt is very ugly
+pub fn equal(received: &Type, expected: &Type) -> bool {
+    match (received, expected) {
+        (Type::TInt, Type::TInt) => true,
+        (Type::TBool, Type::TBool) => true,
+        (Type::TVar { value: received, .. }, Type::TVar { value: expected, .. }) => {
+            received == expected
+        }
+        (
+            Type::Arrow {
+                left: received_left,
+                right: received_right,
+            },
+            Type::Arrow {
+                left: expected_left,
+                right: expected_right,
+            },
+        ) => equal(received_left, expected_left) & equal(received_right, expected_right),
+        (
+            Type::Product {
+                fst: received_fst,
+                snd: received_snd,
+            },
+            Type::Product {
+                fst: expected_fst,
+                snd: expected_snd,
+            },
+        ) => equal(&received_fst, &expected_fst) & equal(&received_snd, &expected_snd),
+        (
+            Type::Forall {
+                param: received_param,
+                body: received_body,
+            },
+            Type::Forall {
+                param: expected_param,
+                body: expected_body,
+            },
+        ) => {
+            let to = Type::TVar { value: expected_param.clone() };
+            let received_body = substitution(received_body, received_param, &to);
+            equal(&received_body, expected_body)
+        }
+        (_, _) => false,
+    }
+}
+```
+
+Now that we have defined the "Equal" function, we can use it to infer Application expressions. Firstly, we infer the types of both the lambda and the argument. Then, we check if the inferred type of the lambda is an arrow function. If it is, we check if the `left` in the arrow function is equal to the argument type that we have inferred. If it is, we can return the `right` argument of the arrow function, which represents the return type of the lambda. If the argument is not equal, we return an error indicating that the types are incompatible.
+
+```rust
+pub fn infer_type(context: &mut Context, expr: &Expr) -> Result<Type, TypeError> {
+    match expr {
+        ...
+        Expr::App(app) => {
+            let lambda_ty = infer_type(context, &app.lambda)?;
+            let argm_ty = infer_type(context, &app.argm)?;
+
+            match lambda_ty {
+                Type::Arrow { left, right } if equal(&left, &argm_ty) => Ok(*right),
+                Type::Arrow { left, .. } => Err(TypeError::Mismatch(*left, argm_ty)),
+                _ => Err(TypeError::Mismatch(lambda_ty, argm_ty)),
+            }
+        }
+    }
+}
+```
+
+We're almost at the end. Now we need to infer the type of a Type Abstraction. Since the structure of a Type Abstraction is `λT. e`, we can simply infer the type of the body e and return a universal quantifier (For All) where the type parameter of the For All is the parameter used in the abstraction, i.e. `T`. This is because for any type abstraction, the inferred type should be a universal quantifier that introduces the type parameter used in the abstraction, making the type polymorphic over that parameter.
+
+```rust
+pub fn infer_type(context: &mut Context, expr: &Expr) -> Result<Type, TypeError> {
+    match expr {
+        ...
+        Expr::TAbs(tabs) => {
+            let body_ty = infer_type(context, &tabs.body)?;
+
+            Ok(Type::Forall {
+                param: tabs.param.clone(),
+                body: Box::new(body_ty),
+            })
+        }
+    }
+}
+```
+
+To infer the last Expression, the type application, we need before define a substitution function, substitution is an essential part of type inference that allows us to replace a type variable with another type in a type expression
+
+or example, suppose we have an expression like `λid: X. id` and we want to substitute the type `X` with a concrete type such as `Int`. We can achieve this by passing the expression, the variable we want to substitute, and the new value to the substitution function. After performing the substitution, we can obtain the expression `λid: Int. id.`
+
+Let's implement this
+
+```rust
+pub fn substitution(ty: &Type, from: &str, to: &Type) -> Type {
+    match ty {
+        Type::TInt => ty.clone(),
+        Type::TBool => ty.clone(),
+        Type::TVar { value } if value == from => to.clone(),
+        Type::TVar { .. } => ty.clone(),
+        Type::Arrow { left, right } => {
+            let left = substitution(left, from, to);
+            let right = substitution(right, from, to);
+
+            Type::Arrow {
+                left: Box::new(left),
+                right: Box::new(right),
+            }
+        }
+        Type::Forall { param, .. } if param == from => ty.clone(),
+        Type::Forall { param, body } => {
+            let body = substitution(body, from, to);
+
+            Type::Forall {
+                param: param.clone(),
+                body: Box::new(body),
+            }
+        }
+        Type::Product { fst, snd } => {
+            let fst = substitution(fst, from, to);
+            let snd = substitution(snd, from, to);
+
+            Type::Product {
+                fst: Box::new(fst),
+                snd: Box::new(snd),
+            }
+        }
+    }
+}
+```
+
+Most of this function is simply propagating the substitution. However, the most important case to understand is the following:
+
+```rust
+Type::TVar { value } if value == from => to.clone(),
+Type::TVar { .. } => ty.clone(),
+```
+
+In this case, if the expression is a variable, we check if its value is equal to the variable that we want to substitute. If it is, we return the new value. If it is not, we return the default expression. This is the key step that allows us to perform the substitution recursively on all parts of the type expression, replacing only the desired variable and leaving all other variables untouched, now that we have implemented the substitution function, we can perform the final type inference step, which is type inference on Type Application.
+
+```rust
+pub fn infer_type(context: &mut Context, expr: &Expr) -> Result<Type, TypeError> {
+    match expr {
+        ...
+        Expr::TApp(tapp) => {
+            let lambda_ty = infer_type(context, &tapp.lambda)?;
+
+            match lambda_ty {
+                Type::Forall { param, body } => Ok(substitution(&body, &param, &tapp.argm)),
+                _ => Err(TypeError::UnexpectedType(lambda_ty)),
+            }
+        }
+    }
+}
+
+```
+The type inference process for Type Application is similar to that for Application. First, we infer the type of the lambda of the application. We then check whether the inferred type is a `For All`. If it is, we apply the substitution function to the body of the `For All`, where the the variable we want to substitute is the `For All` parameter, and the new value for the substitution is the type application argument.
+
+```rust
+pub fn type_of(expr: Expr) -> Result<Type, TypeError> {
+    let mut ctx = Context::new();
+    let typ = infer_type(&mut ctx, &expr)?;
+
+    Ok(typ)
+}
+```
+
+The implementation is finished, and now we can test it with expressions such as
+
+| expression                          | type                      |
+| ----------------------------------- | ------------------------- |
+| λA. λB. λp: (A × B). {snd p, fst p} | ∀A. ∀B. (A × B -> B × A)  |
+| λA. λx: A. x                        | ∀A. (A -> A)              |
+| λA. λx: A. x                        | ∀A. (A -> A)              |
+| (λA. λx: A. x) [Int]                | (Int -> Int)              |
+| λA. λB. λx: A. λy: B. x             | ∀A. ∀B. (A -> (B -> A))   |
+| (λA. λB. λx: A. λy: B. x) [Bool]    | ∀B. (Bool -> (B -> Bool)) |
+
+That concludes our discussion on type inference, you can see the original implementation [here](https://github.com/noge-labs/lambda-cube/tree/main/src/system-f). I hope you found this post informative and helpful. Thank you for taking the time to read it!
+
+---
+
+### Resources
+
+- Pierce, B.C. (2002). "Types and Programming Languages". MIT Press. Chapters 23 and 25.
+- [Wang, Serena & Yuan, Charles. (2018) "System F and Existential Types"](https://www.andrew.cmu.edu/course/15-312/recitations/rec6-notes.pdf)
+- [Nogueira, Pablo. (2006). "A Short Introduction to Systems F and Fω"](https://web.archive.org/web/20190819092245/http://babel.ls.fi.upm.es:80/~pablo/Papers/Notes/f-fw.pdf)
