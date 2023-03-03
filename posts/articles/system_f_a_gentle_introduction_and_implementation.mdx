@@ -1,15 +1,14 @@
 ---
-title: "System-F: A Gentle Introduction and Implementation"
-description: "Let's understand a little bit about types"
-date: "2023-03-02"
+title: 'System-F: A Gentle Introduction and Implementation'
+date: '2023-03-02'
 tags: ['functional-programming', 'type-theory']
 ---
 
-System F is a Typed Lambda Calculus that incorporates a mechanism of universal quantification over types. Therefore, to better understand the concepts discussed in this post, it is assumed that you already have a basic understanding of the ([Simply Typed](https://en.wikipedia.org/wiki/Simply_typed_lambda_calculus)) [Lambda Calculus](https://en.wikipedia.org/wiki/Lambda_calculus) and the Lambda Calculus itself, along with concepts such as bound and free variables, alpha-equivalence, and capture-avoiding substitution.
+System F is a Typed Lambda Calculus that incorporates a mechanism of [universal quantification](https://en.wikipedia.org/wiki/Universal_quantification) over types. Therefore, to better understand the concepts discussed in this post, it is assumed that you already have a basic understanding of the ([Simply Typed](https://en.wikipedia.org/wiki/Simply_typed_lambda_calculus)) [Lambda Calculus](https://en.wikipedia.org/wiki/Lambda_calculus) and the Lambda Calculus itself, along with concepts such as bound and free variables, alpha-equivalence, and capture-avoiding substitution.
 
 ## Introduction
 
-In System F, the [universal quantifier](https://en.wikipedia.org/wiki/Universal_quantification) over types enables the creation of functions that can be applied to any data type, allowing for greater code reusability and flexibility. This is particularly useful in situations where a function needs to be applied to a variety of different data types.
+In System F, the universal quantifier over types enables the creation of functions that can be applied to any data type, allowing for greater code reusability and flexibility. This is particularly useful in situations where a function needs to be applied to a variety of different data types.
 
 The key feature of System-F is the introduction of polymorphic types, there are several different types of polymorphism and different forms of polymorphism can be mixed in the same language. However, it should be noted that in System F, polymorphism specifically refers to parametric polymorphism.
 
@@ -17,7 +16,7 @@ Parametric polymorphism refers to operations that can handle multiple types in t
 
 To understand the functioning of polymorphic types in System-F and the benefits of polymorphism, let's examine a basic example of the identity function in the Simply Typed Lambda Calculus:
 
-```haskell
+```plain
 id_int    = λx:int. x
 id_bool   = λx:bool. x
 id_string = λx:string. x
@@ -25,7 +24,7 @@ id_string = λx:string. x
 
 Each of these functions can be applied to a different type of argument, but all share precisely the same behavior. If we wish to apply the id operation to different types of arguments within the same program, we would need to define separate versions of the function for each new type. The main limitation of the STLC type system is that it only allows for monomorphic types, which reduces the flexibility and reusability of code. System-F addresses this problem by introducing polymorphic types. Let us write a version of the code in System-F and explore its advantages, don't be scared, the grammar used will be explained better.
 
-```haskell
+```plain
 id = ∀T. λT. λx: T. x
 
 id_int    = id [Int]
@@ -35,16 +34,16 @@ id_string = id [String]
 
 Let's take a look at how to implement a swap function that swaps the first and second elements of a pair, first in Simply Typed Lambda Calculus (STLC), and then in System F. This will give us a better understanding of the differences between the two systems and how System F enables code reusability.
 
-```
-swap_int    = λpair: (Int × Int). (snd pair, fst pair)
-swap_bool   = λpair: (Bool × Bool). (snd pair, fst pair)
+```plain
+swap_int = λpair: (Int × Int). (snd pair, fst pair)
+swap_bool = λpair: (Bool × Bool). (snd pair, fst pair)
 swap_string = λpair: (String × String). (snd pair, fst pair)
 ...
 ```
 
 Let's implement the swap function in System F to show the benefits of using polymorphic types.
 
-```
+```plain
 swap = ∀A. ∀B. λpair: (A × B). (fst pair, snd pair)
 
 swap_int    = swap [Int] [Int]
@@ -483,6 +482,7 @@ pub fn infer_type(context: &mut Context, expr: &Expr) -> Result<Type, TypeError>
 }
 
 ```
+
 The type inference process for Type Application is similar to that for Application. First, we infer the type of the lambda of the application. We then check whether the inferred type is a `For All`. If it is, we apply the substitution function to the body of the `For All`, where the the variable we want to substitute is the `For All` parameter, and the new value for the substitution is the type application argument.
 
 ```rust

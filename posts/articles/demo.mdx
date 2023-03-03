@@ -4,3 +4,36 @@ description: 'demo'
 date: '2023-01-03'
 tags: ['demo']
 ---
+
+```rust
+pub fn infer_type(context: &mut Context, expr: &Expr) -> Result<Type, TypeError> {
+  match expr {
+    ...
+    Expr::Pair(pair) => {
+        let fst = infer_type(context, &pair.fst)?;
+        let snd = infer_type(context, &pair.snd)?;
+
+        Ok(Type::Product {
+            fst: Box::new(fst),
+            snd: Box::new(snd),
+        })
+    }
+    Expr::Fst(fst) => {
+        let pair = infer_type(context, &fst.pair)?;
+
+        match pair {
+            Type::Product { fst, .. } => Ok(*fst),
+            pair => Err(TypeError::UnexpectedType(pair)),
+        }
+    }
+    Expr::Snd(snd) => {
+        let pair = infer_type(context, &snd.pair)?;
+
+        match pair {
+            Type::Product { snd, .. } => Ok(*snd),
+            pair => Err(TypeError::UnexpectedType(pair)),
+        }
+    }
+  }
+}
+```

@@ -1,7 +1,8 @@
+import { ReactNode } from 'react';
 import { Prose } from './Prose';
 
 interface NoteProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export const Note: React.FC<NoteProps> = ({ children }) => {
