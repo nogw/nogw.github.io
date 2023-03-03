@@ -9,7 +9,7 @@ export interface IDiary {
 
 const diaryPath = path.join(process.cwd(), '/posts/diary');
 
-const getMdxDiary = (filename: string) => getMdx<IDiary>(filename, diaryPath);
-const getAllMdxDiaries = () => getAllMdx<IDiary>(diaryPath);
+const getMdxDiary = (filename: string) => getMdx(filename, diaryPath);
+const getAllMdxDiaries = () => getAllMdx(diaryPath);
 
 export { getMdxDiary, getAllMdxDiaries };
