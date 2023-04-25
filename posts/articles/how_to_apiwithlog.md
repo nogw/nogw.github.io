@@ -59,7 +59,7 @@ DEBUG=true node your_file.ts
 By default, apiWithLog logs only basic information, such as request and response headers and status codes. However, you can customize the logging behavior by setting environment variables. Here are the available options:
 
 * DEBUG: When the `DEBUG` environment variable is set to "true", apiWithLog logs all available information for API calls, including request and response bodies, headers, elapsed time, and more.
-* WRITE_MOCK: If you set the `WRITE_MOCK` environment variable to "true", saves the request data to a file that can be used for mocking. This can be useful when you want to test your code without making actual API calls. You can then use the saved data to simulate responses to future requests.
+* WRITE_MOCK: : If you set the `WRITE_MOCK` environment variable to "true", apiWithLog will save the request data to a file that can be used for mocking. This feature can be useful when you want to test your code without making actual API calls. You can then use the saved data to simulate responses to future requests.
 * USE_MOCK: When the `USE_MOCK` environment variable is set to "true", apiWithLog will reply to requests with the saved mock data instead of making a real API call. This can be useful when you want to test your code without depending on external APIs.
 
 ## Conclusion 
