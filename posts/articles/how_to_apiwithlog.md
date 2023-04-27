@@ -1,5 +1,5 @@
 ---
-title: 'How To Improve API Development with `apiWithLog`'
+title: 'How To Improve API Development with apiWithLog'
 date: '2023-04-25'
 tags: ['functional-programming', 'type-theory']
 --- 
