@@ -8,7 +8,7 @@ export interface ISettings {
 
 export const settings: ISettings = {
   name: 'nogland',
-  description: 'todo',
+  description: 'All about my thoughts, posts, ideas (>o_o< axolotl)',
   url: 'https://nogw.github.io/',
   avatar: 'https://avatars.githubusercontent.com/nogw',
   routes: [
