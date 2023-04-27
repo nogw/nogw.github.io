@@ -64,5 +64,6 @@ By default, apiWithLog logs only basic information, such as request and response
 
 ## Conclusion 
 
-apiWithLog is a flexible NPM library that provides a simple way to log API calls and customize the logging behavior based on your project's needs. Additionally, it offers features such as mocking of API calls and error handling. By using "api-with-log", you can better monitor and track the API calls made by your application, leading to more efficient and effective development.
+apiWithLog is a flexible NPM library that provides a simple way to log API calls and customize the logging behavior based on your project's needs. Additionally, it offers features such as mocking of API calls and error handling. By using `apiWithLog`, you can better monitor and track the API calls made by your application, leading to more efficient and effective development.
 
+- [apiWithLog on Github](https://github.com/entria/apiWithLog)
